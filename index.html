@@ -432,7 +432,16 @@
                 state.statuses[item.nama] = item.status || '';
             });
 
-            document.getElementById('labelSheetActive').innerText = `Sheet: ${response.sheetName || 'Aktif'}`;
+            // Isi otomatis Kelas & TP jika terdeteksi dari Spreadsheet
+            if (response.kelas) {
+                document.getElementById('inputKelas').value = response.kelas;
+            }
+            if (response.thPel) {
+                document.getElementById('inputThPelajaran').value = response.thPel;
+            }
+
+            const infoText = response.ssName ? `${response.ssName} (${response.sheetName})` : `Sheet: ${response.sheetName || 'Aktif'}`;
+            document.getElementById('labelSheetActive').innerText = infoText;
             renderSiswaList();
             updateStats();
         }
