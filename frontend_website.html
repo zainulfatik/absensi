@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aplikasi Presensi Siswa Spreadsheet</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            800: '#166534',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col antialiased">
+
+    <!-- HEADER ATAS -->
+    <header class="bg-gradient-to-r from-emerald-700 via-teal-700 to-emerald-800 text-white shadow-lg sticky top-0 z-30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                
+                <!-- Logo & Judul Utama -->
+                <div class="flex items-center space-x-3">
+                    <div class="p-2.5 bg-white/10 backdrop-blur-md rounded-xl border border-white/20 shadow-inner">
+                        <i class="fa-solid fa-clipboard-user text-2xl text-emerald-200"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-white flex items-center gap-2">
+                            <span>PRESENSI SISWA</span>
+                            <span class="text-xs bg-emerald-500/30 text-emerald-100 px-2.5 py-0.5 rounded-full border border-emerald-400/30 font-medium">GitHub Edition</span>
+                        </h1>
+                        <p class="text-xs text-emerald-100/80">Sistem Pencatatan Kehadiran Digital Terintegrasi</p>
+                    </div>
+                </div>
+
+                <!-- PENGATURAN KELAS, TAHUN PELAJARAN & KONEKSI APP SCRIPT -->
+                <div class="flex flex-wrap items-center gap-2 bg-emerald-900/40 backdrop-blur-md p-2 rounded-xl border border-emerald-500/30">
+                    <div class="flex items-center space-x-2 bg-white/10 px-3 py-1.5 rounded-lg">
+                        <i class="fa-solid fa-graduation-cap text-emerald-300 text-sm"></i>
+                        <span class="text-xs text-emerald-200 font-medium">Kelas:</span>
+                        <input type="text" id="inputKelas" value="X - IPA 1" 
+                               onchange="saveHeaderConfig()" 
+                               class="bg-transparent font-semibold text-sm text-white focus:outline-none w-24 border-b border-emerald-400/50 focus:border-white transition-all text-center placeholder-emerald-300/50" placeholder="Contoh: X-1">
+                    </div>
+
+                    <div class="flex items-center space-x-2 bg-white/10 px-3 py-1.5 rounded-lg">
+                        <i class="fa-solid fa-calendar-days text-emerald-300 text-sm"></i>
+                        <span class="text-xs text-emerald-200 font-medium">TP:</span>
+                        <input type="text" id="inputThPelajaran" value="2025/2026" 
+                               onchange="saveHeaderConfig()" 
+                               class="bg-transparent font-semibold text-sm text-white focus:outline-none w-28 border-b border-emerald-400/50 focus:border-white transition-all text-center placeholder-emerald-300/50" placeholder="2025/2026">
+                    </div>
+
+                    <!-- Button Modal URL Web App Apps Script -->
+                    <button onclick="toggleUrlModal()" class="ml-auto bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow-md transition-all flex items-center gap-1.5" title="Atur Link Web App Google Apps Script">
+                        <i class="fa-solid fa-link"></i>
+                        <span class="hidden sm:inline">Set URL AppScript</span>
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT CONTAINER -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-grow w-full space-y-6">
+
+        <!-- NOTIFIKASI JIKA URL WEB APP BELUM DIISI -->
+        <div id="urlWarningBanner" class="hidden bg-amber-50 border border-amber-200 text-amber-800 p-4 rounded-2xl shadow-sm flex items-start gap-3">
+            <i class="fa-solid fa-triangle-exclamation text-amber-600 text-xl mt-0.5"></i>
+            <div class="flex-grow text-xs leading-relaxed">
+                <strong class="font-bold text-sm block mb-1">URL Web App Google Script belum dikonfigurasi!</strong>
+                Aplikasi saat ini berjalan dalam mode simulasi offline. Agar terhubung dengan Google Spreadsheet Anda, klik tombol <strong>"Set URL AppScript"</strong> di pojok kanan atas dan tempelkan Web App URL hasil deployment Apps Script Anda.
+            </div>
+            <button onclick="toggleUrlModal()" class="bg-amber-600 hover:bg-amber-700 text-white font-semibold px-3 py-1.5 rounded-lg text-xs whitespace-nowrap shadow transition-all">
+                Atur URL Sekarang
+            </button>
+        </div>
+
+        <!-- PANEL CONTROL & TANGGAL -->
+        <section class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-6 transition-all hover:shadow-md">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                
+                <!-- Tanggal Selector -->
+                <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+                    <label for="tanggalInput" class="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                        <i class="fa-regular fa-calendar-check text-emerald-600"></i>
+                        Pilih Tanggal Presensi:
+                    </label>
+                    <div class="relative">
+                        <input type="date" id="tanggalInput" onchange="onDateChanged()" 
+                               class="w-full sm:w-auto bg-slate-50 border border-slate-300 text-slate-800 text-sm rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 block p-2.5 font-medium shadow-sm">
+                    </div>
+                    <button onclick="loadSiswaList()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 p-2.5 rounded-xl transition-all" title="Refresh Data Siswa">
+                        <i class="fa-solid fa-rotate text-sm"></i>
+                    </button>
+                </div>
+
+                <!-- Action Button NIHIL (Semua Hadir) -->
+                <div class="flex items-center gap-2">
+                    <button onclick="konfirmasiNihil()" class="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm px-5 py-2.5 rounded-xl shadow-sm hover:shadow transition-all flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-check-double text-base"></i>
+                        <span>Presensi NIHIL (Semua Hadir)</span>
+                    </button>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- STATS & RINGKASAN PRESENSI -->
+        <section class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+            
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center space-x-3">
+                <div class="p-3 bg-slate-100 text-slate-600 rounded-lg">
+                    <i class="fa-solid fa-users text-lg"></i>
+                </div>
+                <div>
+                    <p class="text-xs text-slate-500 font-medium">Total Siswa</p>
+                    <h3 id="statTotal" class="text-lg font-bold text-slate-800">0</h3>
+                </div>
+            </div>
+
+            <div class="bg-white p-4 rounded-xl border border-emerald-200 bg-emerald-50/30 shadow-sm flex items-center space-x-3">
+                <div class="p-3 bg-emerald-100 text-emerald-700 rounded-lg">
+                    <i class="fa-solid fa-user-check text-lg"></i>
+                </div>
+                <div>
+                    <p class="text-xs text-emerald-700 font-medium">Hadir (V)</p>
+                    <h3 id="statHadir" class="text-lg font-bold text-emerald-800">0</h3>
+                </div>
+            </div>
+
+            <div class="bg-white p-4 rounded-xl border border-amber-200 bg-amber-50/30 shadow-sm flex items-center space-x-3">
+                <div class="p-3 bg-amber-100 text-amber-700 rounded-lg">
+                    <i class="fa-solid fa-notes-medical text-lg"></i>
+                </div>
+                <div>
+                    <p class="text-xs text-amber-700 font-medium">Sakit (S)</p>
+                    <h3 id="statSakit" class="text-lg font-bold text-amber-800">0</h3>
+                </div>
+            </div>
+
+            <div class="bg-white p-4 rounded-xl border border-blue-200 bg-blue-50/30 shadow-sm flex items-center space-x-3">
+                <div class="p-3 bg-blue-100 text-blue-700 rounded-lg">
+                    <i class="fa-solid fa-envelope-open-text text-lg"></i>
+                </div>
+                <div>
+                    <p class="text-xs text-blue-700 font-medium">Izin (I)</p>
+                    <h3 id="statIzin" class="text-lg font-bold text-blue-800">0</h3>
+                </div>
+            </div>
+
+            <div class="bg-white p-4 rounded-xl border border-rose-200 bg-rose-50/30 shadow-sm flex items-center space-x-3">
+                <div class="p-3 bg-rose-100 text-rose-700 rounded-lg">
+                    <i class="fa-solid fa-user-xmark text-lg"></i>
+                </div>
+                <div>
+                    <p class="text-xs text-rose-700 font-medium">Alpa (A)</p>
+                    <h3 id="statAlpa" class="text-lg font-bold text-rose-800">0</h3>
+                </div>
+            </div>
+
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center space-x-3">
+                <div class="p-3 bg-slate-100 text-slate-500 rounded-lg">
+                    <i class="fa-solid fa-hourglass-start text-lg"></i>
+                </div>
+                <div>
+                    <p class="text-xs text-slate-500 font-medium">Belum Diisi</p>
+                    <h3 id="statBelum" class="text-lg font-bold text-slate-700">0</h3>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- LIST SISWA & FORM PRESENSI -->
+        <section class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            
+            <!-- Filter & Search Bar -->
+            <div class="p-4 sm:p-6 border-b border-slate-200 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div class="flex items-center space-x-2">
+                    <h2 class="text-base sm:text-lg font-bold text-slate-800">Daftar Nama Siswa</h2>
+                    <span id="labelSheetActive" class="text-xs bg-slate-200 text-slate-700 px-2.5 py-1 rounded-full font-medium">Memuat...</span>
+                </div>
+
+                <div class="relative w-full sm:w-72">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                        <i class="fa-solid fa-magnifying-glass text-sm"></i>
+                    </div>
+                    <input type="text" id="searchInput" onkeyup="filterSiswa()" 
+                           placeholder="Cari nama siswa..." 
+                           class="w-full pl-9 pr-4 py-2 bg-white border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all">
+                </div>
+            </div>
+
+            <!-- Loader Indicator -->
+            <div id="loader" class="hidden p-12 text-center">
+                <div class="inline-block animate-spin rounded-full h-10 w-10 border-4 border-emerald-500 border-t-transparent mb-3"></div>
+                <p class="text-slate-500 text-sm font-medium">Menghubungkan ke Spreadsheet & mengambil data siswa...</p>
+            </div>
+
+            <!-- List Container -->
+            <div id="siswaContainer" class="divide-y divide-slate-100 max-h-[600px] overflow-y-auto custom-scrollbar">
+                <!-- Siswa Items akan dirender otomatis via JavaScript -->
+            </div>
+
+            <!-- Empty State -->
+            <div id="emptyState" class="hidden p-12 text-center">
+                <i class="fa-solid fa-folder-open text-4xl text-slate-300 mb-3"></i>
+                <p class="text-slate-600 font-medium">Tidak ada data siswa ditemukan.</p>
+                <p class="text-xs text-slate-400 mt-1">Pastikan nama kolom di Spreadsheet sudah benar ("NAMA SISWA" atau "NAMA") dan URL Apps Script sudah tepat.</p>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- MODAL SETTINGS GOOGLE APPS SCRIPT URL -->
+    <div id="urlModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-xl w-full flex flex-col overflow-hidden border border-slate-200">
+            <div class="px-6 py-4 bg-slate-800 text-white flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-link text-amber-400"></i>
+                    <h3 class="font-bold text-lg">Konfigurasi URL Google Apps Script</h3>
+                </div>
+                <button onclick="toggleUrlModal()" class="text-slate-400 hover:text-white transition-all text-xl">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            
+            <div class="p-6 space-y-4 text-xs text-slate-600">
+                <p>
+                    Masukkan URL Web App hasil deployment Google Apps Script Anda di bawah ini agar website di GitHub Pages dapat berkomunikasi dengan Google Spreadsheet.
+                </p>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Web App URL (https://script.google.com/macros/s/.../exec)</label>
+                    <input type="text" id="inputScriptUrl" placeholder="https://script.google.com/macros/s/AKfycb.../exec" 
+                           class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 font-mono text-xs focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                </div>
+                <div class="bg-emerald-50 border border-emerald-200 p-3 rounded-xl text-emerald-800 text-xs leading-relaxed space-y-1">
+                    <p class="font-bold"><i class="fa-solid fa-circle-info mr-1"></i> Cara Memperoleh URL Deployment:</p>
+                    <ol class="list-decimal list-inside space-y-0.5 pl-1">
+                        <li>Buka Google Apps Script tempat Anda menempelkan kode `Code.gs`.</li>
+                        <li>Klik <strong>Deploy &gt; New deployment</strong>.</li>
+                        <li>Pilih type: <strong>Web App</strong>.</li>
+                        <li>Set <em>Execute as</em>: <strong>Me</strong>.</li>
+                        <li>Set <em>Who has access</em>: <strong>Anyone</strong> (Sangat penting!).</li>
+                        <li>Salin URL Web App dan tempelkan di atas.</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="p-4 bg-slate-100 border-t border-slate-200 flex justify-end gap-2">
+                <button onclick="toggleUrlModal()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold px-4 py-2 rounded-xl text-xs transition-all">Batal</button>
+                <button onclick="saveScriptUrl()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-5 py-2 rounded-xl text-xs shadow transition-all flex items-center gap-1.5">
+                    <i class="fa-solid fa-floppy-disk"></i> Simpan URL
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION CONTAINER -->
+    <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-md"></div>
+
+    <script>
+        // Data Mockup untuk Simulasi Offline jika URL Apps Script belum diisi
+        const MOCK_SISWA = [
+            "ABDUL RAHMAN", "ACHMAD ZAKI", "ADELIA PUTRI", "AGUS SETIAWAN", 
+            "AHMAD FADILLAH", "AULIA RAHMAWATI", "BAMBANG SURYONO", "CITRA DEWI",
+            "DEWI ANGGRAENI", "DWI CAHYO", "EKA SAPUTRA", "FARHAN MAULANA",
+            "FITRIANI", "GILANG RAMADHAN", "INDRA KUSUMA", "INTAN PERMATA"
+        ];
+
+        let state = {
+            siswaList: [],
+            statuses: {},
+            tanggal: new Date().toISOString().split('T')[0],
+            scriptUrl: ''
+        };
+
+        // Initialize App
+        window.onload = function() {
+            document.getElementById('tanggalInput').value = state.tanggal;
+            loadHeaderConfig();
+            loadScriptUrl();
+            loadSiswaList();
+        };
+
+        // Save Header Config to LocalStorage
+        function saveHeaderConfig() {
+            const kelas = document.getElementById('inputKelas').value;
+            const thPel = document.getElementById('inputThPelajaran').value;
+            localStorage.setItem('presensi_kelas', kelas);
+            localStorage.setItem('presensi_thpel', thPel);
+            showToast('Pengaturan Kelas & Tahun Pelajaran tersimpan', 'info');
+        }
+
+        function loadHeaderConfig() {
+            const savedKelas = localStorage.getItem('presensi_kelas');
+            const savedThPel = localStorage.getItem('presensi_thpel');
+            if (savedKelas) document.getElementById('inputKelas').value = savedKelas;
+            if (savedThPel) document.getElementById('inputThPelajaran').value = savedThPel;
+        }
+
+        // Script URL Management
+        function saveScriptUrl() {
+            const url = document.getElementById('inputScriptUrl').value.trim();
+            if (!url) {
+                showToast('URL Apps Script tidak boleh kosong', 'error');
+                return;
+            }
+            localStorage.setItem('presensi_appscript_url', url);
+            state.scriptUrl = url;
+            toggleUrlModal();
+            checkUrlStatus();
+            showToast('URL Google Apps Script berhasil disimpan!', 'success');
+            loadSiswaList();
+        }
+
+        function loadScriptUrl() {
+            const savedUrl = localStorage.getItem('presensi_appscript_url') || '';
+            state.scriptUrl = savedUrl;
+            document.getElementById('inputScriptUrl').value = savedUrl;
+            checkUrlStatus();
+        }
+
+        function checkUrlStatus() {
+            const warningBanner = document.getElementById('urlWarningBanner');
+            if (!state.scriptUrl) {
+                warningBanner.classList.remove('hidden');
+            } else {
+                warningBanner.classList.add('hidden');
+            }
+        }
+
+        function toggleUrlModal() {
+            const modal = document.getElementById('urlModal');
+            modal.classList.toggle('hidden');
+        }
+
+        // On Date Change Event
+        function onDateChanged() {
+            state.tanggal = document.getElementById('tanggalInput').value;
+            loadSiswaList();
+        }
+
+        // Fetch Student Names automatically based on Spreadsheet / Date via Apps Script API
+        function loadSiswaList() {
+            showLoader(true);
+            const dateStr = state.tanggal;
+
+            if (state.scriptUrl) {
+                // PANGGIL BACKEND APPS SCRIPT VIA FETCH API (JSON)
+                const fetchUrl = `${state.scriptUrl}?action=getDaftarSiswa&tanggal=${encodeURIComponent(dateStr)}`;
+
+                fetch(fetchUrl)
+                    .then(response => {
+                        if (!response.ok) throw new Error('HTTP status ' + response.status);
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data && data.success) {
+                            onDaftarSiswaReceived(data);
+                        } else {
+                            showToast(data.message || 'Gagal mengambil data dari Spreadsheet', 'error');
+                            showLoader(false);
+                        }
+                    })
+                    .catch(err => {
+                        showLoader(false);
+                        showToast('Gagal terhubung ke Apps Script: ' + err.message, 'error');
+                    });
+            } else {
+                // SIMULASI OFFLINE UNTUK DUMMY DATA
+                setTimeout(() => {
+                    const mockData = {
+                        siswaList: MOCK_SISWA.map(nama => ({
+                            nama: nama,
+                            status: state.statuses[nama] || ''
+                        })),
+                        sheetName: getBulanNameFromDate(dateStr)
+                    };
+                    onDaftarSiswaReceived(mockData);
+                }, 400);
+            }
+        }
+
+        function getBulanNameFromDate(dateStr) {
+            const months = ['JANUARI', 'FEBRUARI', 'MARET', 'APRIL', 'MEI', 'JUNI', 'JULI', 'AGUSTUS', 'SEPTEMBER', 'OKTOBER', 'NOVEMBER', 'DESEMBER'];
+            const p = dateStr.split('-');
+            const idx = parseInt(p[1], 10) - 1;
+            return months[idx] || 'DESEMBER';
+        }
+
+        function onDaftarSiswaReceived(response) {
+            showLoader(false);
+            if (!response) {
+                showToast('Gagal mengambil data siswa', 'error');
+                return;
+            }
+
+            const list = response.siswaList || [];
+            state.siswaList = list;
+            
+            // Sync status
+            list.forEach(item => {
+                state.statuses[item.nama] = item.status || '';
+            });
+
+            document.getElementById('labelSheetActive').innerText = `Sheet: ${response.sheetName || 'Aktif'}`;
+            renderSiswaList();
+            updateStats();
+        }
+
+        // Render Student List in HTML
+        function renderSiswaList() {
+            const container = document.getElementById('siswaContainer');
+            const emptyState = document.getElementById('emptyState');
+            const searchQuery = document.getElementById('searchInput').value.toLowerCase();
+
+            container.innerHTML = '';
+
+            const filtered = state.siswaList.filter(item => 
+                item.nama.toLowerCase().includes(searchQuery)
+            );
+
+            if (filtered.length === 0) {
+                emptyState.classList.remove('hidden');
+                return;
+            } else {
+                emptyState.classList.add('hidden');
+            }
+
+            filtered.forEach((item, index) => {
+                const nama = item.nama;
+                const status = state.statuses[nama] || '';
+
+                const row = document.createElement('div');
+                row.className = "p-4 hover:bg-slate-50 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3";
+
+                row.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <span class="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-100 text-slate-500 font-semibold text-xs">
+                            ${index + 1}
+                        </span>
+                        <div>
+                            <h4 class="font-bold text-slate-800 text-sm sm:text-base">${escapeHtml(nama)}</h4>
+                            <span class="text-xs text-slate-400">Status saat ini: 
+                                <strong class="${getStatusColorClass(status)}">${status || 'Belum diisi'}</strong>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Tombol Action Status (V, S, I, A) -->
+                    <div class="flex items-center gap-1.5 self-end sm:self-auto">
+                        <button onclick="inputStatus('${escapeHtml(nama)}', 'V')" 
+                                class="px-3.5 py-2 rounded-xl font-bold text-xs transition-all shadow-sm flex items-center gap-1 ${status === 'V' ? 'bg-emerald-600 text-white ring-2 ring-emerald-600/30' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200'}">
+                            <i class="fa-solid fa-check text-xs"></i> Hadir (V)
+                        </button>
+
+                        <button onclick="inputStatus('${escapeHtml(nama)}', 'S')" 
+                                class="px-3.5 py-2 rounded-xl font-bold text-xs transition-all shadow-sm flex items-center gap-1 ${status === 'S' ? 'bg-amber-500 text-white ring-2 ring-amber-500/30' : 'bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200'}">
+                            Sakit (S)
+                        </button>
+
+                        <button onclick="inputStatus('${escapeHtml(nama)}', 'I')" 
+                                class="px-3.5 py-2 rounded-xl font-bold text-xs transition-all shadow-sm flex items-center gap-1 ${status === 'I' ? 'bg-blue-600 text-white ring-2 ring-blue-600/30' : 'bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200'}">
+                            Izin (I)
+                        </button>
+
+                        <button onclick="inputStatus('${escapeHtml(nama)}', 'A')" 
+                                class="px-3.5 py-2 rounded-xl font-bold text-xs transition-all shadow-sm flex items-center gap-1 ${status === 'A' ? 'bg-rose-600 text-white ring-2 ring-rose-600/30' : 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200'}">
+                            Alpa (A)
+                        </button>
+                    </div>
+                `;
+
+                container.appendChild(row);
+            });
+        }
+
+        function getStatusColorClass(status) {
+            switch(status) {
+                case 'V': return 'text-emerald-600 font-bold';
+                case 'S': return 'text-amber-600 font-bold';
+                case 'I': return 'text-blue-600 font-bold';
+                case 'A': return 'text-rose-600 font-bold';
+                default: return 'text-slate-400 font-normal';
+            }
+        }
+
+        function filterSiswa() {
+            renderSiswaList();
+        }
+
+        function inputStatus(nama, status) {
+            const payload = {
+                tanggal: state.tanggal,
+                nama: nama,
+                status: status,
+                isNihil: false
+            };
+
+            const isFirstEntry = Object.values(state.statuses).every(val => !val || val === '');
+
+            if (isFirstEntry) {
+                state.siswaList.forEach(item => {
+                    if (item.nama === nama) {
+                        state.statuses[item.nama] = status;
+                    } else {
+                        state.statuses[item.nama] = 'V';
+                    }
+                });
+                showToast(`Klik pertama! ${nama} (${status}), siswa lainnya otomatis centang (V)`, 'success');
+            } else {
+                state.statuses[nama] = status;
+                showToast(`Status ${nama} diperbarui ke (${status})`, 'success');
+            }
+
+            renderSiswaList();
+            updateStats();
+
+            if (state.scriptUrl) {
+                sendPresensiToBackend(payload);
+            }
+        }
+
+        function konfirmasiNihil() {
+            if (!confirm(`Apakah Anda yakin ingin mengisi SEMUA siswa dengan centang (V) pada tanggal ${state.tanggal}?`)) {
+                return;
+            }
+
+            const payload = {
+                tanggal: state.tanggal,
+                isNihil: true
+            };
+
+            state.siswaList.forEach(item => {
+                state.statuses[item.nama] = 'V';
+            });
+
+            renderSiswaList();
+            updateStats();
+            showToast(`Presensi NIHIL berhasil! Semua siswa diisi centang (V)`, 'success');
+
+            if (state.scriptUrl) {
+                sendPresensiToBackend(payload);
+            }
+        }
+
+        function sendPresensiToBackend(payload) {
+            fetch(state.scriptUrl, {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(res => {
+                if (res && res.message) {
+                    showToast(res.message, res.success ? 'success' : 'error');
+                }
+            })
+            .catch(err => {
+                showToast('Gagal menyimpan ke Spreadsheet: ' + err.message, 'error');
+            });
+        }
+
+        function updateStats() {
+            const total = state.siswaList.length;
+            let hadir = 0, sakit = 0, izin = 0, alpa = 0, belum = 0;
+
+            state.siswaList.forEach(item => {
+                const st = state.statuses[item.nama];
+                if (st === 'V') hadir++;
+                else if (st === 'S') sakit++;
+                else if (st === 'I') izin++;
+                else if (st === 'A') alpa++;
+                else belum++;
+            });
+
+            document.getElementById('statTotal').innerText = total;
+            document.getElementById('statHadir').innerText = hadir;
+            document.getElementById('statSakit').innerText = sakit;
+            document.getElementById('statIzin').innerText = izin;
+            document.getElementById('statAlpa').innerText = alpa;
+            document.getElementById('statBelum').innerText = belum;
+        }
+
+        function showLoader(show) {
+            const loader = document.getElementById('loader');
+            const container = document.getElementById('siswaContainer');
+            if (show) {
+                loader.classList.remove('hidden');
+                container.classList.add('hidden');
+            } else {
+                loader.classList.add('hidden');
+                container.classList.remove('hidden');
+            }
+        }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            
+            let bgClass = 'bg-slate-800 text-white';
+            let icon = 'fa-circle-info';
+            if (type === 'success') { bgClass = 'bg-emerald-600 text-white'; icon = 'fa-circle-check'; }
+            if (type === 'error') { bgClass = 'bg-rose-600 text-white'; icon = 'fa-triangle-exclamation'; }
+
+            toast.className = `${bgClass} px-4 py-3 rounded-xl shadow-lg text-xs font-medium flex items-center space-x-2 transition-all transform translate-y-2 opacity-0 duration-300`;
+            toast.innerHTML = `<i class="fa-solid ${icon}"></i><span>${escapeHtml(message)}</span>`;
+
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            }, 10);
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+
+        function escapeHtml(text) {
+            return String(text)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+</html>
