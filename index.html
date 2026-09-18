@@ -105,7 +105,6 @@
                         <span>Presensi NIHIL</span>
                     </button>
 
-                    <!-- TOMBOL CETAK REKAP PDF -->
                     <button onclick="cetakRekap()" class="bg-sky-600 hover:bg-sky-700 text-white font-semibold text-sm px-4 py-2.5 rounded-xl shadow-sm hover:shadow transition-all flex items-center gap-2">
                         <i class="fa-solid fa-file-pdf text-base"></i>
                         <span>Cetak Rekap PDF</span>
@@ -123,7 +122,7 @@
             </div>
             <div class="bg-white p-4 rounded-xl border border-emerald-200 bg-emerald-50/30 shadow-sm flex items-center space-x-3">
                 <div class="p-3 bg-emerald-100 text-emerald-700 rounded-lg"><i class="fa-solid fa-user-check text-lg"></i></div>
-                <div><p class="text-xs text-emerald-700 font-medium">Hadir (V)</p><h3 id="statHadir" class="text-lg font-bold text-emerald-800">0</h3></div>
+                <div><p class="text-xs text-emerald-700 font-medium">Hadir (•)</p><h3 id="statHadir" class="text-lg font-bold text-emerald-800">0</h3></div>
             </div>
             <div class="bg-white p-4 rounded-xl border border-amber-200 bg-amber-50/30 shadow-sm flex items-center space-x-3">
                 <div class="p-3 bg-amber-100 text-amber-700 rounded-lg"><i class="fa-solid fa-notes-medical text-lg"></i></div>
@@ -187,8 +186,6 @@
             </div>
             
             <div class="p-6 space-y-4 text-xs text-slate-700 max-h-[75vh] overflow-y-auto">
-                
-                <!-- PILIHAN BULAN YANG MAU DICETAK -->
                 <div>
                     <label class="block font-bold mb-1 text-slate-800">Pilih Bulan Rekap Yang Ingin Dicetak</label>
                     <select id="printBulan" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl font-bold text-sky-800 focus:ring-2 focus:ring-sky-500">
@@ -209,7 +206,7 @@
 
                 <div>
                     <label class="block font-bold mb-1">Tempat & Tanggal Cetak</label>
-                    <input type="text" id="printTglCetak" placeholder="Contoh: Surabaya, 30 September 2026" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500">
+                    <input type="text" id="printTglCetak" placeholder="Contoh: Surabaya, 31 Oktober 2026" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500">
                 </div>
 
                 <div class="border-t pt-3">
@@ -312,7 +309,6 @@
                 const dateObj = new Date(state.tanggal);
                 const monthIdx = dateObj.getMonth();
                 
-                // Set default dropdown bulan cetak sesuai bulan tanggal terpilih
                 document.getElementById('printBulan').value = BULAN_LIST[monthIdx];
 
                 const bulanIndoNama = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
@@ -455,7 +451,7 @@
                 setTimeout(() => {
                     const mockData = {
                         siswaList: MOCK_SISWA.map(nama => ({ nama: nama, status: state.statuses[nama] || '' })),
-                        sheetName: 'DESEMBER'
+                        sheetName: 'OKTOBER'
                     };
                     onDaftarSiswaReceived(mockData);
                 }, 400);
@@ -508,12 +504,12 @@
                         <span class="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-100 text-slate-500 font-semibold text-xs">${index + 1}</span>
                         <div>
                             <h4 class="font-bold text-slate-800 text-sm sm:text-base">${escapeHtml(nama)}</h4>
-                            <span class="text-xs text-slate-400">Status: <strong class="${getStatusColorClass(status)}">${status || 'Belum diisi'}</strong></span>
+                            <span class="text-xs text-slate-400">Status: <strong class="${getStatusColorClass(status)}">${status === '•' || status === 'V' ? 'Hadir (•)' : (status || 'Belum diisi')}</strong></span>
                         </div>
                     </div>
 
                     <div class="flex items-center gap-1.5">
-                        <button onclick="inputStatus('${escapeHtml(nama)}', 'V')" class="px-3 py-1.5 rounded-xl font-bold text-xs ${status === 'V' ? 'bg-emerald-600 text-white' : 'bg-emerald-50 text-emerald-700'}">Hadir (V)</button>
+                        <button onclick="inputStatus('${escapeHtml(nama)}', '•')" class="px-3 py-1.5 rounded-xl font-bold text-xs ${status === '•' || status === 'V' ? 'bg-emerald-600 text-white' : 'bg-emerald-50 text-emerald-700'}">Hadir (•)</button>
                         <button onclick="inputStatus('${escapeHtml(nama)}', 'S')" class="px-3 py-1.5 rounded-xl font-bold text-xs ${status === 'S' ? 'bg-amber-500 text-white' : 'bg-amber-50 text-amber-700'}">Sakit (S)</button>
                         <button onclick="inputStatus('${escapeHtml(nama)}', 'I')" class="px-3 py-1.5 rounded-xl font-bold text-xs ${status === 'I' ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-700'}">Izin (I)</button>
                         <button onclick="inputStatus('${escapeHtml(nama)}', 'A')" class="px-3 py-1.5 rounded-xl font-bold text-xs ${status === 'A' ? 'bg-rose-600 text-white' : 'bg-rose-50 text-rose-700'}">Alpa (A)</button>
@@ -526,6 +522,7 @@
 
         function getStatusColorClass(status) {
             switch(status) {
+                case '•':
                 case 'V': return 'text-emerald-600 font-bold';
                 case 'S': return 'text-amber-600 font-bold';
                 case 'I': return 'text-blue-600 font-bold';
@@ -541,8 +538,8 @@
             const isFirstEntry = Object.values(state.statuses).every(val => !val || val === '');
 
             if (isFirstEntry) {
-                state.siswaList.forEach(item => { state.statuses[item.nama] = (item.nama === nama) ? status : 'V'; });
-                showToast(`Klik pertama! ${nama} (${status}), sisanya otomatis centang (V)`, 'success');
+                state.siswaList.forEach(item => { state.statuses[item.nama] = (item.nama === nama) ? status : '•'; });
+                showToast(`Klik pertama! ${nama} (${status}), sisanya otomatis hadir (•)`, 'success');
             } else {
                 state.statuses[nama] = status;
                 showToast(`Status ${nama} diperbarui ke (${status})`, 'success');
@@ -555,10 +552,10 @@
         }
 
         function konfirmasiNihil() {
-            if (!confirm(`Isi SEMUA siswa dengan centang (V) pada tanggal ${state.tanggal}?`)) return;
+            if (!confirm(`Isi SEMUA siswa dengan hadir (•) pada tanggal ${state.tanggal}?`)) return;
             const payload = { tanggal: state.tanggal, isNihil: true };
 
-            state.siswaList.forEach(item => { state.statuses[item.nama] = 'V'; });
+            state.siswaList.forEach(item => { state.statuses[item.nama] = '•'; });
             renderSiswaList();
             updateStats();
             showToast(`Presensi NIHIL berhasil!`, 'success');
@@ -580,7 +577,7 @@
             let hadir = 0, sakit = 0, izin = 0, alpa = 0, belum = 0;
             state.siswaList.forEach(item => {
                 const st = state.statuses[item.nama];
-                if (st === 'V') hadir++;
+                if (st === '•' || st === 'V') hadir++;
                 else if (st === 'S') sakit++;
                 else if (st === 'I') izin++;
                 else if (st === 'A') alpa++;
