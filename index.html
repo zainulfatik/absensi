@@ -186,7 +186,27 @@
                 </button>
             </div>
             
-            <div class="p-6 space-y-3 text-xs text-slate-700 max-h-[75vh] overflow-y-auto">
+            <div class="p-6 space-y-4 text-xs text-slate-700 max-h-[75vh] overflow-y-auto">
+                
+                <!-- PILIHAN BULAN YANG MAU DICETAK -->
+                <div>
+                    <label class="block font-bold mb-1 text-slate-800">Pilih Bulan Rekap Yang Ingin Dicetak</label>
+                    <select id="printBulan" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl font-bold text-sky-800 focus:ring-2 focus:ring-sky-500">
+                        <option value="JANUARI">JANUARI</option>
+                        <option value="FEBRUARI">FEBRUARI</option>
+                        <option value="MARET">MARET</option>
+                        <option value="APRIL">APRIL</option>
+                        <option value="MEI">MEI</option>
+                        <option value="JUNI">JUNI</option>
+                        <option value="JULI">JULI</option>
+                        <option value="AGUSTUS">AGUSTUS</option>
+                        <option value="SEPTEMBER">SEPTEMBER</option>
+                        <option value="OKTOBER">OKTOBER</option>
+                        <option value="NOVEMBER">NOVEMBER</option>
+                        <option value="DESEMBER">DESEMBER</option>
+                    </select>
+                </div>
+
                 <div>
                     <label class="block font-bold mb-1">Tempat & Tanggal Cetak</label>
                     <input type="text" id="printTglCetak" placeholder="Contoh: Surabaya, 30 September 2026" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500">
@@ -264,6 +284,7 @@
 
     <script>
         const MOCK_SISWA = ["ABDUL RAHMAN", "ACHMAD ZAKI", "ADELIA PUTRI", "AGUS SETIAWAN"];
+        const BULAN_LIST = ['JANUARI','FEBRUARI','MARET','APRIL','MEI','JUNI','JULI','AGUSTUS','SEPTEMBER','OKTOBER','NOVEMBER','DESEMBER'];
 
         let state = {
             siswaList: [],
@@ -289,8 +310,13 @@
                 document.getElementById('printNipGuru').value = localStorage.getItem('ttd_nip_guru') || '';
                 
                 const dateObj = new Date(state.tanggal);
-                const bulanIndo = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
-                const tglFormatted = `Surabaya, ${dateObj.getDate()} ${bulanIndo[dateObj.getMonth()]} ${dateObj.getFullYear()}`;
+                const monthIdx = dateObj.getMonth();
+                
+                // Set default dropdown bulan cetak sesuai bulan tanggal terpilih
+                document.getElementById('printBulan').value = BULAN_LIST[monthIdx];
+
+                const bulanIndoNama = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+                const tglFormatted = `Surabaya, ${dateObj.getDate()} ${bulanIndoNama[monthIdx]} ${dateObj.getFullYear()}`;
                 document.getElementById('printTglCetak').value = tglFormatted;
             }
         }
@@ -305,6 +331,7 @@
         }
 
         function prosesDownloadPdf() {
+            const selectedBulan = document.getElementById('printBulan').value;
             const tglCetak = document.getElementById('printTglCetak').value;
             const namaKepsek = document.getElementById('printNamaKepsek').value;
             const nipKepsek = document.getElementById('printNipKepsek').value;
@@ -327,6 +354,7 @@
                 body: JSON.stringify({
                     action: 'updateAndExportPdf',
                     tanggal: state.tanggal,
+                    bulan: selectedBulan,
                     kelas: kelas,
                     thPel: thPel,
                     tglCetak: tglCetak,
